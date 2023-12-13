@@ -1,89 +1,84 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Chart from 'react-apexcharts';
 
 function LineChart() {
-  const [sData, setSdata] = useState([]);
-  const [nvdi, setNvdi] = useState(0);
-  const [accumGDD, setAccumGDD] = useState(0);
-  const [accumRainfall, setAccumRainfall] = useState(0);
+  const [baseData, setBaseData] = useState([]);
+  const [chartData, setChartData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const getChartData = async () => {
+    async function fetchBaseData() {
       try {
-        const response = await fetch('https://raw.githubusercontent.com/alexanderboliva/test/main/api_example.json');
-        const data = await response.json();
-        const newData = [];
+        const apiToken = 'd0NLCpTnvtsY1gQu7S38RyF47fOjnHknynBjGzWxCwpXOJqXaNwWDrGqFomq';
 
-        let totalNvdi = 0;
-        let totalAccumGDD = 0;
-        let totalAccumRainfall = 0;
+        const response = await axios.get(`https://3c.fluxoti.com/api/v1/campaigns?paused=false&page=1&api_token=${apiToken}`);
 
-        for (let i = 0; i < data.length; i++) {
-          const date = new Date(data[i].time * 1000);
-          const month = date.toLocaleString('default', { month: 'short' });
-          const degreeDays = data[i].degree_days;
-          const precipitation = data[i].precipitation;
-          const ndvi = data[i].ndvi;
+        const data = response.data.data;
 
-          if (newData.length === 0 || month !== newData[newData.length - 1].x) {
-            newData.push({
-              x: month,
-              y: [degreeDays, precipitation, ndvi]
-            });
-          }
+        console.log('API Response Data:', data);
 
-          totalNvdi += ndvi;
-          totalAccumGDD += degreeDays;
-          totalAccumRainfall += precipitation;
-        }
+        const newData = data.map((base) => ({
+          name: base.name,
+          start_time: base.start_time,
+          end_time: base.end_time,
+          asr: parseFloat(base.asr),
+        }));
 
-        setSdata(newData);
-        setNvdi(totalNvdi.toFixed(1));
-        setAccumGDD(totalAccumGDD.toFixed(1));
-        setAccumRainfall(totalAccumRainfall.toFixed(1));
+        console.log('Formatted Data:', newData);
+
+        setBaseData(newData);
+
+        const chartData = {
+          series: [
+            { name: 'ASR', data: newData.map((item) => item.asr) },
+          ],
+          options: {
+            chart: {
+              height: 350,
+              type: 'line',
+            },
+            xaxis: {
+              categories: newData.map((item) => item.name),
+            },
+            title: {
+              text: 'ASR Over Bases',
+              align: 'center',
+            },
+          },
+        };
+
+        console.log('Chart Data:', chartData);
+
+        setChartData(chartData);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setError('Error fetching data. Please try again later.');
+      } finally {
+        setLoading(false);
       }
-    };
+    }
 
-    getChartData();
+    fetchBaseData();
   }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
 
   return (
     <div className='container-fluid mt-3 mb-3'>
-      <h2>Line Chart - Indicators Growth</h2>
-      <div className="indicators-summary">
-        <p>NVDI: {nvdi}</p>
-        <p>Accumulated GDD: {accumGDD}</p>
-        <p>Accumulated Rainfall: {accumRainfall}</p>
-      </div>
+      <h2>ASR Over Bases</h2>
       <Chart
+        options={chartData.options}
+        series={chartData.series}
         type='line'
-        width={1450}
-        height={550}
-        series={[
-          { name: 'Degree Days', data: sData.map((item) => item.y[0]) },
-          { name: 'Precipitation', data: sData.map((item) => item.y[1]) },
-          { name: 'NDVI', data: sData.map((item) => item.y[2]) }
-        ]}
-        options={{
-          title: { text: "Indicators Growth Over Time" },
-          xaxis: {
-            title: { text: "Month" },
-            categories: sData.map((item) => item.x)
-          },
-          yaxis: {
-            title: { text: "Degrees Celsius" },
-            labels: {
-              formatter: function (value) {
-                return value.toFixed(1);
-              }
-            }
-          },
-          legend: {
-            position: 'top'
-          }
-        }}
+        height={350}
       />
     </div>
   );
