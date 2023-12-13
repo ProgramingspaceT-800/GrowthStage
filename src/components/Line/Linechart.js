@@ -1,3 +1,5 @@
+// LineChart.js
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Chart from 'react-apexcharts';
@@ -9,59 +11,66 @@ function LineChart() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchBaseData() {
+    async function fetchAllPages(apiToken, currentPage = 1) {
       try {
-        const apiToken = 'd0NLCpTnvtsY1gQu7S38RyF47fOjnHknynBjGzWxCwpXOJqXaNwWDrGqFomq';
-
-        const response = await axios.get(`https://3c.fluxoti.com/api/v1/campaigns?paused=false&page=1&api_token=${apiToken}`);
+        const response = await axios.get(`https://3c.fluxoti.com/api/v1/campaigns?paused=false&page=${currentPage}&api_token=${apiToken}`);
 
         const data = response.data.data;
 
-        console.log('API Response Data:', data);
+        console.log(`API Response Data (Page ${currentPage}):`, data);
 
-        const newData = data.map((base) => ({
-          name: base.name,
-          start_time: base.start_time,
-          end_time: base.end_time,
-          asr: parseFloat(base.asr),
-        }));
+        const newData = data
+          .filter((base) => !base.name.startsWith('R') && !base.name.startsWith('E')) && !base.name.startsWith('M'))
+          .map((base) => ({
+            name: base.name,
+            start_time: base.start_time,
+            end_time: base.end_time,
+            asr: parseFloat(base.asr),
+          }));
 
-        console.log('Formatted Data:', newData);
+        console.log(`Formatted Data (Page ${currentPage}):`, newData);
 
-        setBaseData(newData);
+        setBaseData((prevData) => [...prevData, ...newData]);
 
-        const chartData = {
-          series: [
-            { name: 'ASR', data: newData.map((item) => item.asr) },
-          ],
-          options: {
-            chart: {
-              height: 350,
-              type: 'line',
+        // Continue fetching next page if available
+        if (response.data.meta.current_page < response.data.meta.last_page) {
+          fetchAllPages(apiToken, currentPage + 1);
+        } else {
+          // All pages processed, generate chart data
+          const chartData = {
+            series: [
+              { name: 'ASR', data: baseData.map((item) => item.asr) },
+            ],
+            options: {
+              chart: {
+                height: 350,
+                type: 'line',
+              },
+              xaxis: {
+                categories: baseData.map((item) => item.name),
+              },
+              title: {
+                text: 'ASR Over Bases',
+                align: 'center',
+              },
             },
-            xaxis: {
-              categories: newData.map((item) => item.name),
-            },
-            title: {
-              text: 'ASR Over Bases',
-              align: 'center',
-            },
-          },
-        };
+          };
 
-        console.log('Chart Data:', chartData);
+          console.log('Chart Data:', chartData);
 
-        setChartData(chartData);
+          setChartData(chartData);
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Error fetching data. Please try again later.');
-      } finally {
         setLoading(false);
       }
     }
 
-    fetchBaseData();
-  }, []);
+    const apiToken = 'd0NLCpTnvtsY1gQu7S38RyF47fOjnHknynBjGzWxCwpXOJqXaNwWDrGqFomq';
+    fetchAllPages(apiToken);
+  }, [baseData]);
 
   if (loading) {
     return <p>Loading...</p>;
