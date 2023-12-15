@@ -5,10 +5,13 @@ import LineChart from './components/Line/Linechart';
 import StartTimeChart from './components/Starttime/startime';
 import CompletionRateChart from './components/Completion/CompletionRateChart'
 import PausaStatusChart from './components/Pause/PausaStatusChart'
+import Navbar from './components/Navbar';
 
 function App() {
   return (
     <div>
+
+      <Navbar/>
       <h1>Dashboard</h1>
 
       {/* Gráfico de Linha (ASR Over Bases) */}

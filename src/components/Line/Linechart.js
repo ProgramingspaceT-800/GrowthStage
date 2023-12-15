@@ -17,10 +17,10 @@ function LineChart() {
 
         const data = response.data.data;
 
-        console.log(`API Response Data (Page ${currentPage}):`, data);
 
+        console.log(`API Response Data (Page ${currentPage}):`, data);
         const newData = data
-          .filter((base) => !base.name.startsWith('R') && !base.name.startsWith('E')) && !base.name.startsWith('M'))
+          .filter((base) => (!base.name.startsWith('R') && !base.name.startsWith('E')))// Add semicolon here**
           .map((base) => ({
             name: base.name,
             start_time: base.start_time,
