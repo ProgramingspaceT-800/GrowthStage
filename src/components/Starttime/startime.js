@@ -11,11 +11,11 @@ function StartTimeChart() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchStartTimeData() {
+    async function fetchStartTimeData(pageSize = 10) {
       try {
         const apiToken = 'd0NLCpTnvtsY1gQu7S38RyF47fOjnHknynBjGzWxCwpXOJqXaNwWDrGqFomq';
 
-        const response = await axios.get(`https://3c.fluxoti.com/api/v1/campaigns?paused=false&page=1&api_token=${apiToken}`);
+        const response = await axios.get(`https://3c.fluxoti.com/api/v1/campaigns?paused=false&page=1&api_token=${apiToken}&per_page=${pageSize}`);
 
         const data = response.data.data;
 
@@ -38,13 +38,40 @@ function StartTimeChart() {
             chart: {
               height: 350,
               type: 'bar',
+              foreColor: '#fff',  // White text color
             },
             xaxis: {
               categories: newStartTimeData.map((item) => item.name),
+              labels: {
+                style: {
+                  colors: '#fff',  // White text color
+                },
+              },
+            },
+            yaxis: {
+              labels: {
+                style: {
+                  colors: '#fff',  // White text color
+                },
+              },
             },
             title: {
               text: 'Start Time of Campaigns',
               align: 'center',
+              style: {
+                color: '#fff',  // White text color
+              },
+            },
+            plotOptions: {
+              bar: {
+                colors: {
+                  ranges: [{
+                    from: 0,
+                    to: 100,
+                    color: '#ff0000',  // Red color for bars
+                  }],
+                },
+              },
             },
           },
         };

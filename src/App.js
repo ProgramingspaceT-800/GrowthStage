@@ -22,9 +22,6 @@ function App() {
 
       {/* Outros gráficos ou componentes podem ser adicionados aqui */}
 
-      <CompletionRateChart/>
-
-      <PausaStatusChart />
     </div>
   );
 }

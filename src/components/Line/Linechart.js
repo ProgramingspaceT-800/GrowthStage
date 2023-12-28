@@ -11,16 +11,15 @@ function LineChart() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchAllPages(apiToken, currentPage = 1) {
+    async function fetchAllPages(apiToken, currentPage = 1, pageSize = 10) {
       try {
-        const response = await axios.get(`https://3c.fluxoti.com/api/v1/campaigns?paused=false&page=${currentPage}&api_token=${apiToken}`);
+        const response = await axios.get(`https://3c.fluxoti.com/api/v1/campaigns?paused=false&page=${currentPage}&api_token=${apiToken}&per_page=${pageSize}`);
 
         const data = response.data.data;
 
-
         console.log(`API Response Data (Page ${currentPage}):`, data);
         const newData = data
-          .filter((base) => (!base.name.startsWith('R') && !base.name.startsWith('E')))// Add semicolon here**
+          .filter((base) => (!base.name.startsWith('R') && !base.name.startsWith('E')))
           .map((base) => ({
             name: base.name,
             start_time: base.start_time,
@@ -32,34 +31,10 @@ function LineChart() {
 
         setBaseData((prevData) => [...prevData, ...newData]);
 
-        // Continue fetching next page if available
-        if (response.data.meta.current_page < response.data.meta.last_page) {
-          fetchAllPages(apiToken, currentPage + 1);
+        if (response.data.meta.current_page < response.data.meta.last_page && baseData.length < 10) {
+          fetchAllPages(apiToken, currentPage + 1, pageSize);
         } else {
-          // All pages processed, generate chart data
-          const chartData = {
-            series: [
-              { name: 'ASR', data: baseData.map((item) => item.asr) },
-            ],
-            options: {
-              chart: {
-                height: 350,
-                type: 'line',
-              },
-              xaxis: {
-                categories: baseData.map((item) => item.name),
-              },
-              title: {
-                text: 'ASR Over Bases',
-                align: 'center',
-              },
-            },
-          };
-
-          console.log('Chart Data:', chartData);
-
-          setChartData(chartData);
-          setLoading(false);
+          updateChartData();
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -68,6 +43,55 @@ function LineChart() {
       }
     }
 
+    const updateChartData = () => {
+      // Take only the first 10 campaigns
+      const slicedBaseData = baseData.slice(0, 10);
+    
+      const chartData = {
+        series: [
+          { name: 'ASR', data: slicedBaseData.map((item) => item.asr) },
+        ],
+        options: {
+          chart: {
+            height: 350,
+            type: 'line',
+            foreColor: '#fff',  // White text color
+          },
+          xaxis: {
+            categories: slicedBaseData.map((item) => item.name),
+            labels: {
+              style: {
+                colors: '#fff',  // White text color
+              },
+            },
+          },
+          yaxis: {
+            labels: {
+              style: {
+                colors: '#fff',  // White text color
+              },
+            },
+          },
+          title: {
+            text: 'ASR Over Bases',
+            align: 'center',
+            style: {
+              color: '#fff',  // White text color
+            },
+          },
+          stroke: {
+            curve: 'smooth',
+            colors: ['#ff0000'],  // Red line color
+          },
+        },
+      };
+    
+      console.log('Chart Data:', chartData);
+    
+      setChartData(chartData);
+      setLoading(false);
+    };
+    
     const apiToken = 'd0NLCpTnvtsY1gQu7S38RyF47fOjnHknynBjGzWxCwpXOJqXaNwWDrGqFomq';
     fetchAllPages(apiToken);
   }, [baseData]);
