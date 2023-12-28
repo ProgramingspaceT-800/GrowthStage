@@ -12,7 +12,6 @@ function App() {
     <div>
 
       <Navbar/>
-      <h1>Dashboard</h1>
 
       {/* Gráfico de Linha (ASR Over Bases) */}
       <LineChart />

@@ -106,7 +106,6 @@ function LineChart() {
 
   return (
     <div className='container-fluid mt-3 mb-3'>
-      <h2>ASR Over Bases</h2>
       <Chart
         options={chartData.options}
         series={chartData.series}
